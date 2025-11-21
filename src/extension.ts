@@ -146,6 +146,20 @@ export async function activate(context: vscode.ExtensionContext) {
             tracksCache = new LRUCache({ maxSize: value, sizeCalculation: () => 1 });
         })
     );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('spotilyrics.toggleMobileMode', async () => {
+            const config = vscode.workspace.getConfiguration('spotilyrics');
+            const currentValue = config.get<boolean>('mobileMode') ?? false;
+            const newValue = !currentValue;
+            await config.update('mobileMode', newValue, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(
+                `Mobile mode ${newValue ? 'enabled' : 'disabled'}`
+            );
+            if (panel && currentPlayingState) {
+                await updateLyrics();
+            }
+        })
+    );
 }
 
 export async function deactivate() {
@@ -300,6 +314,8 @@ async function pollSpotifyStat(context: vscode.ExtensionContext) {
 
 async function updateLyrics() {
     if (authState) {
+        const mobileMode: boolean =
+            vscode.workspace.getConfiguration('spotilyrics').get('mobileMode') ?? false;
         const currentlyPlayingResponse = await SpotifyWebApi.getCurrentlyPlaying(
             authState.accessToken
         );
@@ -337,6 +353,7 @@ async function updateLyrics() {
                             lyrics: trackCache.plainLyricsStrs,
                             color: trackCache.coverColor,
                             textColor: '#' + trackCache.textColor,
+                            mobileMode: mobileMode,
                         });
                     } else if (trackCache.synchronizedLyricsMap) {
                         panel.webview.postMessage({
@@ -344,6 +361,7 @@ async function updateLyrics() {
                             lyrics: trackCache.synchronizedLyricsStrs,
                             color: trackCache.coverColor,
                             textColor: '#' + trackCache.textColor,
+                            mobileMode: mobileMode,
                         });
                     }
                 }
@@ -409,6 +427,7 @@ async function updateLyrics() {
                             lyrics: currentPlayingState.plainLyricsStrs,
                             color: currentPlayingState.coverColor,
                             textColor: '#' + currentPlayingState.textColor,
+                            mobileMode: mobileMode,
                         });
                     }
                 } else {
@@ -427,6 +446,7 @@ async function updateLyrics() {
                             lyrics: currentPlayingState.synchronizedLyricsStrs,
                             color: currentPlayingState.coverColor,
                             textColor: '#' + currentPlayingState.textColor,
+                            mobileMode: mobileMode,
                         });
                     }
                 }
@@ -442,11 +462,14 @@ async function updateLyrics() {
                     currentlyPlayingResponse.progress_ms
                 );
                 if (value && panel) {
+                    const mobileMode: boolean =
+                        vscode.workspace.getConfiguration('spotilyrics').get('mobileMode') ?? false;
                     panel.webview.postMessage({
                         command: 'pickLyrics',
                         pick: value[1].id,
                         color: currentPlayingState.coverColor,
                         textColor: '#' + currentPlayingState.textColor,
+                        mobileMode: mobileMode,
                     });
                 }
             }
