@@ -1,9 +1,10 @@
 let lastLyricsHash = '';
 let lastPickId = null;
+let mobileMode = false;
 
 let lyricsNotFound = [
-    'Looks like we don’t have the lyrics for this song yet.',
-    'Looks like we don’t have the lyrics for this song.',
+    "Looks like we don't have the lyrics for this song yet.",
+    "Looks like we don't have the lyrics for this song.",
     "Hmm. We don't know the lyrics for this one.",
     "You'll have to guess the lyrics for this one.",
 ];
@@ -16,10 +17,13 @@ function getRandomForLyricsNotFound() {
 document.querySelector('.placeholder').textContent = getRandomForLyricsNotFound();
 
 window.addEventListener('message', (event) => {
-    const { command, lyrics, pick, color, textColor } = event.data;
+    const { command, lyrics, pick, color, textColor, mobileMode: mobileModeFlag } = event.data;
     const body = document.body;
     if (color && body.style.backgroundColor !== color) {
         body.style.backgroundColor = color;
+    }
+    if (mobileModeFlag !== undefined) {
+        mobileMode = mobileModeFlag;
     }
     if (command === 'addLyrics') {
         const lyricsHash = JSON.stringify(lyrics);
@@ -27,7 +31,9 @@ window.addEventListener('message', (event) => {
             renderLyrics(lyrics, textColor);
             lastLyricsHash = lyricsHash;
         }
-        pickLyrics(pick, textColor);
+        if (pick !== undefined && pick !== null) {
+            pickLyrics(pick, textColor);
+        }
     } else if (command === 'clearLyrics') {
         clearLyrics();
     } else if (command === 'pickLyrics') {
@@ -56,7 +62,11 @@ function renderLyrics(lyrics, textColor) {
     } else {
         lyrics.forEach((line) => {
             const div = document.createElement('div');
-            div.style.color = textColor;
+            if (mobileMode) {
+                div.style.color = '#000000';
+            } else {
+                div.style.color = textColor;
+            }
             div.className = 'line future';
             div.textContent = line.text || '♪';
             div.dataset.lyricsId = line.id;
@@ -78,7 +88,7 @@ function clearLyrics() {
 }
 
 function pickLyrics(id, textColor) {
-    if (id === lastPickId) {
+    if (id === lastPickId || id === null || id === undefined) {
         return;
     }
     console.log(textColor);
@@ -97,15 +107,30 @@ function pickLyrics(id, textColor) {
     lines.forEach((line, index) => {
         line.classList.remove('past', 'current', 'future');
 
-        if (index < pickedIndex) {
-            line.classList.add('past');
-            line.style.color = textColor;
-        } else if (index === pickedIndex) {
-            line.classList.add('current');
-            line.style.color = 'white';
+        if (mobileMode) {
+            if (index <= pickedIndex) {
+                line.classList.add('current');
+                line.style.color = '#ffffff';
+                line.style.opacity = '1';
+            } else {
+                line.classList.add('future');
+                line.style.color = '#000000';
+                line.style.opacity = '1';
+            }
         } else {
-            line.classList.add('future');
-            line.style.color = textColor;
+            if (index < pickedIndex) {
+                line.classList.add('past');
+                line.style.color = textColor;
+                line.style.opacity = '';
+            } else if (index === pickedIndex) {
+                line.classList.add('current');
+                line.style.color = 'white';
+                line.style.opacity = '';
+            } else {
+                line.classList.add('future');
+                line.style.color = textColor;
+                line.style.opacity = '';
+            }
         }
     });
 

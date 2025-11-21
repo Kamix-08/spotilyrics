@@ -14,7 +14,8 @@
     "activationEvents": [
         "onCommand:spotilyrics.lyrics",
         "onCommand:spotilyrics.logout",
-        "onCommand:spotilyrics.setTracksCacheMaxSize"
+        "onCommand:spotilyrics.setTracksCacheMaxSize",
+        "onCommand:spotilyrics.toggleMobileMode"
     ],
     "main": "./out/extension.js",
     "repository": {
@@ -31,6 +32,11 @@
                     "minimum": 1,
                     "maximum": 9007199254740991,
                     "description": "Maximum cache size for tracks."
+                },
+                "spotilyrics.mobileMode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Mobile mode: black unplayed lines, white played lines."
                 }
             }
         },
@@ -46,6 +52,10 @@
             {
                 "command": "spotilyrics.setTracksCacheMaxSize",
                 "title": "Set Tracks Cache Max Size"
+            },
+            {
+                "command": "spotilyrics.toggleMobileMode",
+                "title": "Toggle Mobile Mode"
             }
         ]
     },
